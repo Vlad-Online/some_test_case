@@ -1,78 +1,158 @@
-<p align="center"><img src="https://res.cloudinary.com/dtfbvvkyp/image/upload/v1566331377/laravel-logolockup-cmyk-red.svg" width="400"></p>
+# Тестовое задание
+1 Тестовое задание
+Данная задача в общем и целом представляет собой упрощённую версию одной из задач, с которой мы сами сталкивались в процессе работы.
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+Тестовое задание разбито на две части. Выполнение второй части будет плюсом, выполнение же первой обязательно.
 
-## About Laravel
+Языком для реализации является PHP, базой данных - PostgreSQL или MySQL, остальное значения не имеет.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+1.1 Часть 1
+Необходимо написать скрипт импорта данных, обрабатывающий директорию с несколькими файлами в формате xml, и складывающий получившиеся данные в базу данных (БД).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Файлы представляют собой немного видоизменённый формат типовой выгрузки системы 1С, содержащей в себе информацию о товарных предложениях.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+В директории располагаются файлы importX_1.xml и offersX_1.xml. В названиях файлов X обозначает город, информация по товарам которого представлена в файле. Каждая пара файлов (import и offers) в совокупности представляет собой информацию о товарах для конкретного города. Файлы дополняют друг друга, то есть часть информации находится в одном файле, часть - в другом.
 
-## Learning Laravel
+Название города также указано в содержимом тэга Классификатор->Наименование в начале файла, например:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+<Наименование>Классификатор (Москва)</Наименование>
+Это может использоваться для определения названия города, для которого применяется данный файл.
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 1500 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Нужная для задания информация - список товаров и торговых предложений, которые сопоставляются по значению поля Код.
 
-## Laravel Sponsors
+В файле import это:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+    <Каталог>
+    <Товары>
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- [UserInsights](https://userinsights.com)
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
-- [User10](https://user10.com)
-- [Soumettre.fr](https://soumettre.fr/)
-- [CodeBrisk](https://codebrisk.com)
-- [1Forge](https://1forge.com)
-- [TECPRESSO](https://tecpresso.co.jp/)
-- [Runtime Converter](http://runtimeconverter.com/)
-- [WebL'Agence](https://weblagence.com/)
-- [Invoice Ninja](https://www.invoiceninja.com)
-- [iMi digital](https://www.imi-digital.de/)
-- [Earthlink](https://www.earthlink.ro/)
-- [Steadfast Collective](https://steadfastcollective.com/)
-- [We Are The Robots Inc.](https://watr.mx/)
-- [Understand.io](https://www.understand.io/)
-- [Abdel Elrafa](https://abdelelrafa.com)
-- [Hyper Host](https://hyper.host)
-- [Appoly](https://www.appoly.co.uk)
-- [OP.GG](https://op.gg)
+    <Товар>
+      <!-- поля товара -->
+      <Код>1234567</Код>        <!--Код товара-->
+      <Вес>0.035</Вес>          <!--Вес товара-->
+      <Наименование>Наименование товара</Наименование> <!--Название товара-->
+      <Взаимозаменяемости>
+        <Взаимозаменяемость>
+          <Марка>CUMMINS</Марка>
+          <Модель>ISBe6.7 (ISDe6.7)</Модель>
+          <КатегорияТС>Двигатели</КатегорияТС>
+        </Взаимозаменяемость>
+        <!-- ... ещё взаимозаменяемости -->
+      </Взаимозаменяемости>
+      <!-- остальные поля можно игнорировать -->
+    </Товар>
 
-## Contributing
+    <Товар>
+      <!-- информация о другом товаре -->
+    </Товар>
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+    <!-- ... ещё товары ... -->
 
-## Code of Conduct
+    </Товары>
+    </Каталог>
+В файле offers:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+    <ПакетПредложений>
+    <Предложения>
 
-## Security Vulnerabilities
+    <Предложение>
+      <Код>1234567</Код>        <!--Код товара-->
+      <Наименование>Наименование товара</Наименование> <!--Название товара-->
+      <Количество>1</Количество>                       <!--Количество товара в данном городе-->
+      <Цены>
+        <!-- В качестве цены товара берётся первая по порядку цена из блока, остальные не нужны -->
+        <Цена>
+          <ЦенаЗаЕдиницу>11891</ЦенаЗаЕдиницу> <!--Цена товара-->
+        </Цена>
+        <!-- ... -->
+      </Цены>
+      <!-- остальные поля можно игнорировать -->
+    </Предложение>
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+    <Предложение>
+      <!-- информация о другом предложении -->
 
-## License
+    </Предложение>
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+    <!-- ... ещё предложения ... -->
+
+    </Предложения>
+    </ПакетПредложений>
+Соответственно, блоки Товар и Предложение с одинаковым полем Код относятся к одному товару. Не все товары представлены во всех файлах, то есть в одном городе может быть больше товаров, чем в другом.
+
+Необходимо написать скрипт на PHP, который бы разбирал содержимое всех файлов, собирал их вместе и складывал бы в таблицу в БД следующего формата:
+
+id - ID товара в БД (autoincrement, primary key)
+
+name - название товара
+
+code - код товара
+
+weight - вес товара
+
+quantity_CITY - количество товара в конкретном городе. Несколько колонок, по одной для каждого города, например quantity_msk, quantity_kazan и так далее. Коды для городов можно взять любые
+
+price_CITY - цена товара в конкретном городе. Аналогично quantity_CITY
+
+usage - перечисленные через символ "|" взаимозаменяемости для данного товара в виде "Марка-Модель-КатегорияТС,Марка-Модель-КатегорияТС,…". Пример: "Foton-1039 E4-Грузовые автомобили|Cummins-ISLe8.9-Двигатели|…".
+
+Если в каком-либо городе нет количества или цены для данного товара, или он отсутствует вообще, в соответствующие поля ставится 0. Если в разных файлах у одного и того же товара имеются несовпадающие поля, например, название или вес, можно использовать любое из них для записи в БД.
+
+При последующем запуске скрипт должен обновлять данные по товарам, находя соответствие по полю Код (то есть обновлять то, что уже есть, а не добавлять новые).
+
+Скрипт желательно реализовать в виде программы для командной строки UNIX-образной ОС.
+
+1.2 Часть 2
+Вывести данные из БД на веб-странице в постраничном виде в виде таблицы, упорядоченные в порядке убывания id. Язык реализации - PHP, используемые фреймворки, инструменты и внешний вид не важны. Количество товаров на странице тоже не имеет значения (то есть можно взять любое адекватное число, например, 20 или 50).
+
+
+# 2 Установка
+    git clone https://github.com/Vlad-Online/some_test_case.git
+Установите зависимости
+    
+    composer install
+
+Задайте в файле .env настройки подключения к базе данных
+
+    DB_CONNECTION=mysql
+    DB_HOST=127.0.0.1
+    DB_PORT=3306
+    DB_DATABASE=somedb
+    DB_USERNAME=root
+    DB_PASSWORD=somepassword
+    
+Запустите миграции базы данных
+
+    php artisan migrate
+    
+Загрузите файлы для импорта в папу data
+
+    ls -alh data
+    итого 828M
+    drwxr-xr-x  2 vlad vlad 4,0K дек 17 01:56 .
+    drwxr-xr-x 15 vlad vlad 4,0K дек 27 17:40 ..
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:45 import0_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:50 import1_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:51 import2_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:51 import3_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:52 import4_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:53 import5_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:53 import6_1.xml
+    -rw-r--r--  1 vlad vlad  68M дек 17 01:53 import7_1.xml
+    -rw-r--r--  1 vlad vlad  43M дек 17 01:43 offers0_1.xml
+    -rw-r--r--  1 vlad vlad  43M дек 17 01:54 offers1_1.xml
+    -rw-r--r--  1 vlad vlad  35M дек 17 01:55 offers2_1.xml
+    -rw-r--r--  1 vlad vlad  35M дек 17 01:55 offers3_1.xml
+    -rw-r--r--  1 vlad vlad  35M дек 17 01:55 offers4_1.xml
+    -rw-r--r--  1 vlad vlad  34M дек 17 01:55 offers5_1.xml
+    -rw-r--r--  1 vlad vlad  34M дек 17 01:56 offers6_1.xml
+    -rw-r--r--  1 vlad vlad  34M дек 17 01:56 offers7_1.xml
+
+Запустите скрипт импорта
+
+    php artisan import:xml
+    
+Для просмотра данных в БД запустите веб сервер
+
+    php artisan serve
+    
+И перейдите по адресу http://127.0.0.1:8000/
