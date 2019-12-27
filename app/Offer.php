@@ -46,9 +46,21 @@ class Offer extends XmlImport
     public function importProduct($productXmlStr)
     {
         if ($product = Product::where('code', $this->getNodeValue($productXmlStr, 'Код'))->first()) {
-            $product->{'quantity_'.$this->getCitySlug()} = $this->getNodeValue($productXmlStr, 'Количество');
-            $product->{'price_'.$this->getCitySlug()}    = $this->getNodeValue($productXmlStr, 'ЦенаЗаЕдиницу');
-            $product->save();
+            $updateRequired = false;
+            $quantity       = $this->getNodeValue($productXmlStr, 'Количество');
+            $price          = $this->getNodeValue($productXmlStr, 'ЦенаЗаЕдиницу');
+            if ($product->{'quantity_'.$this->getCitySlug()} != $quantity) {
+                $product->{'quantity_'.$this->getCitySlug()} = $quantity;
+                $updateRequired                              = true;
+            }
+            if ($product->{'price_'.$this->getCitySlug()} != $price) {
+                $product->{'price_'.$this->getCitySlug()} = $price;
+                $updateRequired                           = true;
+            }
+            if ($updateRequired) {
+                $product->save();
+            }
+
         } else {
             echo 'Not found: '.$productXmlStr->{'Код'};
         }

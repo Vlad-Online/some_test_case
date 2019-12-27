@@ -63,8 +63,11 @@ class importXml extends Command
                 $offer->importProduct($productData);
             }
         }
-        $endTime = $time;
-        echo "Total time: ".($endTime - $time) % 60 .':'.intdiv($endTime - $time, 60)."\r\n";
+        $endTime = time();
+        $minutes = intdiv($endTime - $time, 60);
+        $seconds = ($endTime - $time) % 60;
+        $seconds = $seconds < 10 ? '0'.$seconds : $seconds;
+        echo "Total time: ".$minutes.':'.$seconds."\r\n";
         echo "Finished\r\n";
     }
 
