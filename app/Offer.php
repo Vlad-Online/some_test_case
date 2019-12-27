@@ -3,6 +3,8 @@
 namespace App;
 
 
+use XMLReader;
+
 class Offer extends XmlImport
 {
     /**
@@ -12,10 +14,11 @@ class Offer extends XmlImport
      */
     public function getCity()
     {
-        $element = $this->xml->{'Классификатор'}->{'Наименование'};
-        $string  = (string) $element;
-
-        return preg_replace('/Классификатор \(([^)]*)\)/i', '$1', $string);
+        while ($this->xml->read()) {
+            if ($this->xml->name == 'Наименование' && $this->xml->nodeType == XMLReader::ELEMENT) {
+                return preg_replace('/Классификатор \(([^)]*)\)/i', '$1', $this->xml->readString());
+            }
+        }
     }
 
     /**
@@ -25,24 +28,29 @@ class Offer extends XmlImport
      */
     public function getProductIterator()
     {
-        foreach ($this->xml->{'ПакетПредложений'}->{'Предложения'}->{'Предложение'} as $product) {
-            yield $product;
+        while ($this->xml->read()) {
+            if ($this->xml->name == 'Предложение' && $this->xml->nodeType == XMLReader::ELEMENT) {
+                break;
+            }
         }
+        do {
+            yield $this->xml->readOuterXml();
+        } while ($this->xml->next('Предложение'));
     }
 
     /**
      * Import offer to database
      *
-     * @param $productData
+     * @param $productXmlStr
      */
-    public function importProduct($productData)
+    public function importProduct($productXmlStr)
     {
-        if ($product = Product::where('code', $productData->{'Код'})->first()) {
-            $product->{'quantity_'.$this->getCitySlug()} = (string) $productData->{'Количество'};
-            $product->{'price_'.$this->getCitySlug()}    = (string) $productData->{'Цены'}->{'Цена'}[0]->{'ЦенаЗаЕдиницу'};
+        if ($product = Product::where('code', $this->getNodeValue($productXmlStr, 'Код'))->first()) {
+            $product->{'quantity_'.$this->getCitySlug()} = $this->getNodeValue($productXmlStr, 'Количество');
+            $product->{'price_'.$this->getCitySlug()}    = $this->getNodeValue($productXmlStr, 'ЦенаЗаЕдиницу');
             $product->save();
         } else {
-            echo 'Not found: '.$productData->{'Код'};
+            echo 'Not found: '.$productXmlStr->{'Код'};
         }
     }
 }

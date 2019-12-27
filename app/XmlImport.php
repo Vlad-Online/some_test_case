@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use XMLReader;
 
 abstract class XmlImport
 {
@@ -23,7 +24,9 @@ abstract class XmlImport
     {
         if (file_exists($path)) {
             $this->path = $path;
-            $this->xml  = simplexml_load_file($path);
+            $this->xml  = new XMLReader();
+            $this->xml->open($path);
+            $this->getCitySlug();
         }
     }
 
@@ -59,9 +62,9 @@ abstract class XmlImport
     /**
      * Import product to database
      *
-     * @param $productData
+     * @param $productXmlStr
      */
-    abstract public function importProduct($productData);
+    abstract public function importProduct($productXmlStr);
 
     protected function getTableColumns()
     {
@@ -107,6 +110,17 @@ abstract class XmlImport
         return Schema::table('products', function (Blueprint $table) use ($columnName) {
             $table->decimal($columnName, 8, 2)->default(0);
         });
+    }
+
+    protected function getNodeValue($xmlStr, $nodeName)
+    {
+        $xml = new XMLReader();
+        $xml->xml($xmlStr);
+        while ($xml->read()) {
+            if ($xml->name == $nodeName && $xml->nodeType == XMLReader::ELEMENT) {
+                return $xml->readString();
+            }
+        }
     }
 
 }

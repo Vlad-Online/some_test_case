@@ -3,6 +3,8 @@
 namespace App;
 
 
+use XMLReader;
+
 class Import extends XmlImport
 {
     /**
@@ -12,10 +14,11 @@ class Import extends XmlImport
      */
     public function getCity()
     {
-        $element = $this->xml->{'Классификатор'}->{'Наименование'};
-        $string  = (string) $element;
-
-        return preg_replace('/Классификатор \(([^)]*)\)/i', '$1', $string);
+        while ($this->xml->read()) {
+            if ($this->xml->name == 'Наименование' && $this->xml->nodeType == XMLReader::ELEMENT) {
+                return preg_replace('/Классификатор \(([^)]*)\)/i', '$1', $this->xml->readString());
+            }
+        }
     }
 
     /**
@@ -25,43 +28,74 @@ class Import extends XmlImport
      */
     public function getProductIterator()
     {
-        foreach ($this->xml->{'Каталог'}->{'Товары'}->{'Товар'} as $product) {
-            yield $product;
+        while ($this->xml->read()) {
+            if ($this->xml->name == 'Товар' && $this->xml->nodeType == XMLReader::ELEMENT) {
+                break;
+            }
         }
+        do {
+            yield $this->xml->readOuterXml();
+        } while ($this->xml->next('Товар'));
     }
 
     /**
      * Import product to database
      *
-     * @param $productData
+     * @param $productXmlStr
      */
-    public function importProduct($productData)
+    public function importProduct($productXmlStr)
     {
-        if ($product = Product::where('code', $productData->{'Код'})->first()) {
-            $product->name   = $productData->{'Наименование'};
-            $product->weight = $productData->{'Вес'};
-            $product->usage  = $this->getUsages($productData);
-            $product->save();
+        if ($product = Product::where('code', $this->getNodeValue($productXmlStr, 'Код'))->first()) {
+            $updateRequired = false;
+            $name           = $this->getNodeValue($productXmlStr, 'Наименование');
+            $weight         = $this->getNodeValue($productXmlStr, 'Вес');
+            $usage          = $this->getUsages($productXmlStr);
+            if ($product->name != $name) {
+                $product->name  = $name;
+                $updateRequired = true;
+            }
+
+            if ($product->weight != $weight) {
+                $product->weight = $weight;
+                $updateRequired  = true;
+            }
+
+            if ($product->usage != $usage) {
+                $product->usage = $usage;
+                $updateRequired = true;
+            }
+
+            if ($updateRequired) {
+                $product->save();
+            }
+
         } else {
             Product::create([
-                'code'   => $productData->{'Код'},
-                'name'   => $productData->{'Наименование'},
-                'weight' => $productData->{'Вес'},
-                'usage'  => $this->getUsages($productData)
+                'code'   => $this->getNodeValue($productXmlStr, 'Код'),
+                'name'   => $this->getNodeValue($productXmlStr, 'Наименование'),
+                'weight' => $this->getNodeValue($productXmlStr, 'Вес'),
+                'usage'  => $this->getUsages($productXmlStr)
             ]);
         }
     }
 
-    protected function getUsages($productData)
+    protected function getUsages($productXmlStr)
     {
-        if (!isset($productData->{'Взаимозаменяемости'})) {
-            return '';
-        }
-        $usages = [];
-        foreach ($productData->{'Взаимозаменяемости'}->{'Взаимозаменяемость'} as $usage) {
-            $usages[] = $usage->{'Марка'}.'-'.$usage->{'Модель'}.'-'.$usage->{'КатегорияТС'};
+        $xml = new XMLReader();
+        $xml->xml($productXmlStr);
+        while ($xml->read()) {
+            if ($xml->name == 'Взаимозаменяемость' && $xml->nodeType == XMLReader::ELEMENT) {
+                $usages = [];
+                do {
+                    $usages[] = $this->getNodeValue($xml->readOuterXml(),
+                            'Марка').'-'.$this->getNodeValue($xml->readOuterXml(),
+                            'Модель').'-'.$this->getNodeValue($xml->readOuterXml(), 'КатегорияТС');
+                } while ($xml->next('Взаимозаменяемость'));
+
+                return implode('|', $usages);
+            }
         }
 
-        return implode('|', $usages);
+        return '';
     }
 }

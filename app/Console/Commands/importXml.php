@@ -41,11 +41,13 @@ class importXml extends Command
     public function handle()
     {
         echo "Start import\r\n";
+        $time    = time();
         $imports = glob(base_path().'/data/import*.xml');
         $offers  = glob(base_path().'/data/offers*.xml');
 
         echo "Importing products\r\n";
         foreach ($imports as $importPath) {
+            echo "Parsing file ".$importPath."\r\n";
             $import = new Import($importPath);
             $import->checkColumn($import->getCitySlug());
             foreach ($import->getProductIterator() as $productData) {
@@ -55,11 +57,14 @@ class importXml extends Command
 
         echo "Importing offers\r\n";
         foreach ($offers as $offerPath) {
+            echo "Parsing file ".$offerPath."\r\n";
             $offer = new Offer($offerPath);
             foreach ($offer->getProductIterator() as $productData) {
                 $offer->importProduct($productData);
             }
         }
+        $endTime = $time;
+        echo "Total time: ".($endTime - $time) % 60 .':'.intdiv($endTime - $time, 60)."\r\n";
         echo "Finished\r\n";
     }
 
